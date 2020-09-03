@@ -23,7 +23,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: package
-          path: ./artifactor
+          path: ./proxy-manager
 
   deploy:
     name: Create & push Docker image to GitHub Packages
