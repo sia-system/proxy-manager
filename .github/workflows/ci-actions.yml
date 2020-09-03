@@ -1,0 +1,48 @@
+name: build artifactor
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build artifact
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+            go-version: 1.14.x
+      - name: Cache Golang packages
+        uses: actions/cache@v2
+        with:
+            path: ~/go/pkg/mod
+            key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+            restore-keys: |
+              ${{ runner.os }}-go-
+      - name: Build with Golang
+        run: go build
+      - uses: actions/upload-artifact@v2
+        with:
+          name: package
+          path: ./artifactor
+
+  deploy:
+    name: Create & push Docker image to GitHub Packages
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download Golang build artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: package
+      - id: image-attributes
+        run: |
+          echo ::set-output name=name::${GITHUB_REPOSITORY////-}
+      - name: Push to GitHub Packages
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          repository: ${{ github.repository }}/${{ steps.image-attributes.outputs.name }}
+          tag_with_sha: true
