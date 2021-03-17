@@ -23,10 +23,12 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	cache "github.com/envoyproxy/go-control-plane/pkg/cache/v3"
+	listener "github.com/envoyproxy/go-control-plane/envoy/config/listener/v3"
+	types "github.com/envoyproxy/go-control-plane/pkg/cache/types"
+
 	v1 "k8s.io/api/core/v1"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-
-	env_cache "github.com/envoyproxy/go-control-plane/pkg/cache"
 
 	proxyconf "demius.md/proxy-manager/proxy-config"
 )
@@ -36,7 +38,6 @@ const (
 	localhost = "127.0.0.1"
 	// XdsCluster is the cluster name for the control server (used by non-ADS set-up)
 	XdsCluster       = "xds_cluster"
-	AccesslogCluster = "accesslog_cluster"
 )
 
 // KubeHandler connect envoy-proxy management with k8s info
@@ -45,10 +46,10 @@ type KubeHandler struct {
 	mu              *sync.Mutex
 
 	coreInterface corev1.CoreV1Interface
-	snapshotCache env_cache.SnapshotCache
+	snapshotCache cache.SnapshotCache
 
 	namespaces map[string]Namespace
-	listeners  []env_cache.Resource
+	listener  *listener.Listener
 }
 
 // Namespace map of k8s service-names -> config
@@ -78,14 +79,14 @@ type QualifiedServiceInfo struct {
 }
 
 // New create new KubeHandler
-func New(snapshotCache env_cache.SnapshotCache, coreInterface corev1.CoreV1Interface) *KubeHandler {
+func New(snapshotCache cache.SnapshotCache, coreInterface corev1.CoreV1Interface) *KubeHandler {
 	var snapshotVersion uint64
 	namespaces := map[string]Namespace{}
 
 	mu := &sync.Mutex{}
-	listeners := MakeHTTPListeners()
+	listener := MakeHTTPListener()
 
-	info := KubeHandler{snapshotVersion, mu, coreInterface, snapshotCache, namespaces, listeners}
+	info := KubeHandler{snapshotVersion, mu, coreInterface, snapshotCache, namespaces, listener}
 
 	snapshotCache.SetSnapshot("envoy-proxy", info.Generate())
 
@@ -231,19 +232,16 @@ func (handler *KubeHandler) MakeQualifiedSrvInfos() []QualifiedServiceInfo {
 }
 
 // Generate produces a snapshot from the parameters.
-func (handler *KubeHandler) Generate() env_cache.Snapshot {
+func (handler *KubeHandler) Generate() cache.Snapshot {
 	qualifiedServices := handler.MakeQualifiedSrvInfos()
 	numClusters := len(qualifiedServices)
 
-	clusters := make([]env_cache.Resource, numClusters)
-	endpoints := make([]env_cache.Resource, numClusters)
+	clusters := make([]types.Resource, numClusters)
+	endpoints := make([]types.Resource, numClusters)
 
 	for i, srv := range qualifiedServices {
-		idx := calcListenerIdx(srv.ProxyConfig.Listener)
-		if idx >= 0 {
-			clusters[i] = MakeCluster(srv.ServiceName, srv.Namespace, srv.Alpn, idx)
-			endpoints[i] = MakeEndpoint(srv.ServiceName, srv.Namespace, srv.Endpoints)
-		}
+		clusters[i] = MakeCluster(srv.ServiceName, srv.Namespace, srv.Alpn)
+		endpoints[i] = MakeEndpoint(srv.ServiceName, srv.Namespace, srv.Endpoints)
 	}
 
 	routes := MakeRoutes(qualifiedServices)
@@ -251,5 +249,13 @@ func (handler *KubeHandler) Generate() env_cache.Snapshot {
 	atomic.AddUint64(&handler.snapshotVersion, 1)
 	version := atomic.LoadUint64(&handler.snapshotVersion)
 
-	return env_cache.NewSnapshot(strconv.FormatUint(version, 10), endpoints, clusters, routes, handler.listeners, nil)
+	return cache.NewSnapshot(
+		strconv.FormatUint(version, 10), 
+		endpoints, 
+		clusters, 
+		[]types.Resource{routes}, 
+		[]types.Resource{handler.listener},
+		[]types.Resource{}, // runtimes
+		[]types.Resource{}, // secrets
+	)
 }

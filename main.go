@@ -16,8 +16,8 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
-	envoycache "github.com/envoyproxy/go-control-plane/pkg/cache"
-	envoyserver "github.com/envoyproxy/go-control-plane/pkg/server"
+	envoycache "github.com/envoyproxy/go-control-plane/pkg/cache/v3"
+	envoyserver "github.com/envoyproxy/go-control-plane/pkg/server/v3"
 
 	handler "demius.md/proxy-manager/kube-handler"
 	server "demius.md/proxy-manager/server"
@@ -43,7 +43,6 @@ func init() {
 	flag.UintVar(&gatewayPort, "gateway", 18001, "Management server port for HTTP gateway")
 	flag.UintVar(&upstreamPort, "upstream", 18080, "Upstream HTTP/1.1 port")
 	flag.UintVar(&basePort, "base", 9000, "Listener port")
-	flag.UintVar(&alsPort, "als", 18090, "Accesslog server port")
 }
 
 func main() {
@@ -70,14 +69,12 @@ func main() {
 	// cb := &server.DelegateCallbacks{}
 	snapshotCache := envoycache.NewSnapshotCache(false, envoycache.IDHash{}, nil)
 	srv := envoyserver.NewServer(context.Background(), snapshotCache, nil)
-	als := &server.AccessLogService{}
+	// als := &server.AccessLogService{} // ???
 
 	kubeHandler := handler.New(snapshotCache, clientset.CoreV1())
 
 	// start the xDS server
-	go server.RunAccessLogServer(ctx, als, alsPort)
 	go server.RunManagementServer(ctx, srv, port)
-	// go server.RunManagementGateway(ctx, srv, gatewayPort)
 
 	resyncPeriod := 1 * time.Minute
 
