@@ -67,7 +67,8 @@ func main() {
 
 	// create a cache for envoy management server
 	// cb := &server.DelegateCallbacks{}
-	snapshotCache := envoycache.NewSnapshotCache(false, envoycache.IDHash{}, nil)
+	// snapshotCache := envoycache.NewSnapshotCache(false, envoycache.IDHash{}, nil)
+	snapshotCache := envoycache.NewSnapshotCache(true, envoycache.IDHash{}, nil)
 	srv := envoyserver.NewServer(context.Background(), snapshotCache, nil)
 	// als := &server.AccessLogService{} // ???
 
