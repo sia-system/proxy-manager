@@ -66,6 +66,10 @@ func MakeEndpoint(clusterName, ns string, endpoints []EndpointInfo) *endpoint.Cl
 // MakeCluster creates a cluster using either ADS or EDS.
 func MakeCluster(clusterName, ns string, alpn bool) *cluster.Cluster {
 	edsSource := &core.ConfigSource{
+		ConfigSourceSpecifier: &core.ConfigSource_Ads{
+			Ads: &core.AggregatedConfigSource{},
+		},
+		/*
 		ConfigSourceSpecifier: &core.ConfigSource_ApiConfigSource{
 			ApiConfigSource: &core.ApiConfigSource{
 				ApiType: core.ApiConfigSource_GRPC,
@@ -76,6 +80,7 @@ func MakeCluster(clusterName, ns string, alpn bool) *cluster.Cluster {
 				}},
 			},
 		},
+		*/
 		ResourceApiVersion: core.ApiVersion_V3,
 	}
 
