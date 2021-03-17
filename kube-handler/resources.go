@@ -76,6 +76,7 @@ func MakeCluster(clusterName, ns string, alpn bool) *cluster.Cluster {
 				}},
 			},
 		},
+		ResourceApiVersion: core.ApiVersion_V3,
 	}
 
 	connectTimeout := 30 * time.Second
