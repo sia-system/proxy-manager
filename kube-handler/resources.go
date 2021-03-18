@@ -37,6 +37,7 @@ func MakeEndpoint(clusterName, ns string, endpoints []EndpointInfo) *endpoint.Cl
 		log.Println("      endpont: ", clusterName, ns, ep.IP, ep.Port)
 
 		lbEndpoints[i] = &endpoint.LbEndpoint{
+			HealthStatus: core.HealthStatus_HEALTHY,
 			HostIdentifier: &endpoint.LbEndpoint_Endpoint{
 				Endpoint: &endpoint.Endpoint{
 					Address: &core.Address{
