@@ -65,6 +65,7 @@ func MakeEndpoint(clusterName, ns string, endpoints []EndpointInfo) *endpoint.Cl
 
 // MakeCluster creates a cluster using either ADS or EDS.
 func MakeCluster(clusterName, ns string, alpn bool) *cluster.Cluster {
+	log.Println("      cluster: ", clusterName, ns, alpn)
 	edsSource := &core.ConfigSource{
 		ConfigSourceSpecifier: &core.ConfigSource_ApiConfigSource{
 			ApiConfigSource: &core.ApiConfigSource{
@@ -195,6 +196,8 @@ func commonTLSContext(alpn bool) *transport_sockets.CommonTlsContext {
 	var alpnProtocols []string
 	if alpn {
 		alpnProtocols = []string{"h2", "http/1.1"}
+	} else {
+		alpnProtocols = []string{"http/1.1"}
 	}
 	return &transport_sockets.CommonTlsContext{
 		AlpnProtocols: alpnProtocols,
