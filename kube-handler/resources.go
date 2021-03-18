@@ -196,8 +196,6 @@ func commonTLSContext(alpn bool) *transport_sockets.CommonTlsContext {
 	var alpnProtocols []string
 	if alpn {
 		alpnProtocols = []string{"h2", "http/1.1"}
-	} else {
-		alpnProtocols = []string{"http/1.1"}
 	}
 	return &transport_sockets.CommonTlsContext{
 		AlpnProtocols: alpnProtocols,
