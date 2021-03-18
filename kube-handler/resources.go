@@ -69,7 +69,7 @@ func MakeCluster(clusterName, ns string, alpn bool) *cluster.Cluster {
 	edsSource := &core.ConfigSource{
 		ConfigSourceSpecifier: &core.ConfigSource_ApiConfigSource{
 			ApiConfigSource: &core.ApiConfigSource{
-				ApiType: core.ApiConfigSource_GRPC,
+				ApiType:             core.ApiConfigSource_GRPC,
 				TransportApiVersion: core.ApiVersion_V3,
 				GrpcServices: []*core.GrpcService{{
 					TargetSpecifier: &core.GrpcService_EnvoyGrpc_{
@@ -171,7 +171,7 @@ func MakeHTTPListener() *listener.Listener {
 			}},
 
 			TransportSocket: &core.TransportSocket{
-				Name: "https-transport",
+				Name: "envoy.transport_sockets.tls",
 				ConfigType: &core.TransportSocket_TypedConfig{
 					TypedConfig: downstreamPbst,
 				},
