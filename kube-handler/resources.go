@@ -171,8 +171,7 @@ func MakeHTTPListener() *listener.Listener {
 			}},
 
 			TransportSocket: &core.TransportSocket{
-				// Name: "envoy.transport_sockets.tls",
-				Name: "tls",
+				Name: "envoy.transport_sockets.tls",
 				ConfigType: &core.TransportSocket_TypedConfig{
 					TypedConfig: downstreamPbst,
 				},
