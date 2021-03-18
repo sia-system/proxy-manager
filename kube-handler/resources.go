@@ -83,7 +83,7 @@ func MakeCluster(clusterName, ns string, alpn bool) *cluster.Cluster {
 
 	connectTimeout := 30 * time.Second
 
-	tlsConfig := upstreamTLSContext(alpn) // may be downstream tls context
+	tlsConfig := upstreamTLSContext(alpn)
 
 	tlsConfigPbst, err := ptypes.MarshalAny(tlsConfig)
 	if err != nil {
@@ -171,7 +171,8 @@ func MakeHTTPListener() *listener.Listener {
 			}},
 
 			TransportSocket: &core.TransportSocket{
-				Name: "envoy.transport_sockets.tls",
+				// Name: "envoy.transport_sockets.tls",
+				Name: "tls",
 				ConfigType: &core.TransportSocket_TypedConfig{
 					TypedConfig: downstreamPbst,
 				},
